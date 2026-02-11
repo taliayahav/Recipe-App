@@ -1,0 +1,17 @@
+version: '3.8'
+services:
+  backend:
+    build: ./backend
+    ports:
+      - "7001:7001"
+    volumes:
+      - ./backend/recipes.db:/app/recipes.db
+
+  frontend:
+    build: ./frontend
+    ports:
+      - "5174:80"
+    environment:
+      - VITE_BACKEND_URL=http://backend:7001
+    depends_on:
+      - backend
