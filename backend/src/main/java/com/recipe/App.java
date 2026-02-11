@@ -24,6 +24,14 @@ public class App {
             ctx.header("Access-Control-Allow-Headers", "Content-Type,Authorization");
         });
 
+        // respond to preflight CORS requests
+        app.options("/*", ctx -> {
+            ctx.header("Access-Control-Allow-Origin", "*");
+            ctx.header("Access-Control-Allow-Methods", "GET,POST,PUT,DELETE,OPTIONS");
+            ctx.header("Access-Control-Allow-Headers", "Content-Type,Authorization");
+            ctx.status(200);
+        });
+
         app.get("/recipes", ctx -> {
             List<Recipe> all = RecipeRepository.getAll();
             ctx.json(all);
