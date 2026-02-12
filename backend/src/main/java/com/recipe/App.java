@@ -43,7 +43,7 @@ public class App {
             ctx.status(201).json(created);
         });
 
-        app.put("/recipes/:id", ctx -> {
+        app.put("/recipes/{id}", ctx -> {
             int id = Integer.parseInt(ctx.pathParam("id"));
             Recipe r = mapper.readValue(ctx.body(), Recipe.class);
             r.id = id;
@@ -52,7 +52,7 @@ public class App {
             else ctx.status(404).result("Not found");
         });
 
-        app.delete("/recipes/:id", ctx -> {
+        app.delete("/recipes/{id}", ctx -> {
             int id = Integer.parseInt(ctx.pathParam("id"));
             boolean ok = RecipeRepository.delete(id);
             if (ok) ctx.status(204);
