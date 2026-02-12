@@ -6,7 +6,7 @@ const API = import.meta.env.VITE_BACKEND_URL || 'http://localhost:7001'
 function RecipeCard({ recipe, onEdit, onDelete, onOpen }) {
   return (
     <article className="card" onClick={() => onOpen(recipe)}>
-      <div className="card-image" />
+  <div className="card-image">{recipe.image && <img src={`${API}${recipe.image}`} alt={recipe.title} />}</div>
       <div className="card-body">
         <h3 className="card-title">{recipe.title}</h3>
         <p className="card-ingredients">{recipe.ingredients?.split('\n')[0]}</p>
@@ -37,8 +37,8 @@ function RecipeModal({ recipe, onClose }) {
 
 export default function App() {
   const [recipes, setRecipes] = useState([])
-  const [search, setSearch] = useState('')
   const [form, setForm] = useState({ title: '', ingredients: '', instructions: '' })
+  const [file, setFile] = useState(null)
   const [editingId, setEditingId] = useState(null)
   const [view, setView] = useState('list') // 'list' or 'add'
   const [toast, setToast] = useState({ message: '', visible: false })
@@ -58,11 +58,16 @@ export default function App() {
   async function submit(e) {
     e.preventDefault()
     try {
+      const fd = new FormData()
+      fd.append('title', form.title)
+      fd.append('ingredients', form.ingredients)
+      fd.append('instructions', form.instructions)
+      if (file) fd.append('image', file)
       if (editingId) {
-        await axios.put(`${API}/recipes/${editingId}`, form)
+        await axios.put(`${API}/recipes/${editingId}`, fd, { headers: { 'Content-Type': 'multipart/form-data' } })
         setToast({ message: 'Recipe updated', visible: true })
       } else {
-        await axios.post(`${API}/recipes`, form)
+        await axios.post(`${API}/recipes`, fd, { headers: { 'Content-Type': 'multipart/form-data' } })
         setToast({ message: 'Recipe saved', visible: true })
       }
       setForm({ title: '', ingredients: '', instructions: '' })
@@ -101,13 +106,6 @@ export default function App() {
     <div className="container">
       <header className="nav">
         <h1 onClick={() => setView('list')} style={{ cursor: 'pointer' }}>Recipe Box</h1>
-        <input
-          className="search-input"
-          aria-label="Search recipes"
-          placeholder="Search recipes..."
-          value={search}
-          onChange={e => setSearch(e.target.value)}
-        />
         <div>
           <button onClick={() => { setView('list'); setEditingId(null) }} className={view === 'list' ? 'active' : ''}>Home</button>
           <button onClick={() => { setView('add'); setEditingId(null) }} className={view === 'add' ? 'active' : ''} style={{ marginLeft: 8 }}>Add</button>
@@ -119,25 +117,9 @@ export default function App() {
       {view === 'list' && (
         <main>
           <div className="grid">
-            {(() => {
-              const q = search.trim().toLowerCase()
-              const visible = q
-                ? recipes.filter(r => (r.title || '').toLowerCase().includes(q) || (r.ingredients || '').toLowerCase().includes(q))
-                : recipes
-
-              if (visible.length === 0) {
-                return (
-                  <div className="empty-state">
-                    <p>No recipes found.</p>
-                    <button onClick={() => { setView('add'); setEditingId(null) }}>Add a recipe</button>
-                  </div>
-                )
-              }
-
-              return visible.map(r => (
-                <RecipeCard key={r.id} recipe={r} onEdit={startEdit} onDelete={remove} onOpen={setModalRecipe} />
-              ))
-            })()}
+            {recipes.map(r => (
+              <RecipeCard key={r.id} recipe={r} onEdit={startEdit} onDelete={remove} onOpen={setModalRecipe} />
+            ))}
           </div>
         </main>
       )}
@@ -153,6 +135,8 @@ export default function App() {
               <textarea placeholder="Ingredients" value={form.ingredients} onChange={e => setForm({ ...form, ingredients: e.target.value })} />
               <label>Instructions</label>
               <textarea placeholder="Instructions" value={form.instructions} onChange={e => setForm({ ...form, instructions: e.target.value })} />
+              <label>Image (optional)</label>
+              <input type="file" accept="image/*" onChange={e => setFile(e.target.files[0])} />
               <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
                 <button type="submit">{editingId ? 'Update' : 'Save'}</button>
                 <button type="button" onClick={() => { setEditingId(null); setForm({ title: '', ingredients: '', instructions: '' }); setView('list') }}>Cancel</button>

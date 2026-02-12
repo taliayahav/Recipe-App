@@ -12,11 +12,12 @@ public class RecipeRepository {
     }
 
     public static Recipe create(Recipe r) throws SQLException {
-        String sql = "INSERT INTO recipes(title, ingredients, instructions) VALUES(?,?,?)";
+        String sql = "INSERT INTO recipes(title, ingredients, instructions, image) VALUES(?,?,?,?)";
         try (PreparedStatement ps = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
             ps.setString(1, r.title);
             ps.setString(2, r.ingredients);
             ps.setString(3, r.instructions);
+            ps.setString(4, r.image);
             ps.executeUpdate();
             try (ResultSet rs = ps.getGeneratedKeys()) {
                 if (rs.next()) {
@@ -28,12 +29,13 @@ public class RecipeRepository {
     }
 
     public static boolean update(Recipe r) throws SQLException {
-        String sql = "UPDATE recipes SET title = ?, ingredients = ?, instructions = ? WHERE id = ?";
+        String sql = "UPDATE recipes SET title = ?, ingredients = ?, instructions = ?, image = ? WHERE id = ?";
         try (PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, r.title);
             ps.setString(2, r.ingredients);
             ps.setString(3, r.instructions);
-            ps.setInt(4, r.id == null ? -1 : r.id);
+            ps.setString(4, r.image);
+            ps.setInt(5, r.id == null ? -1 : r.id);
             int updated = ps.executeUpdate();
             return updated > 0;
         }
@@ -50,10 +52,10 @@ public class RecipeRepository {
 
     public static List<Recipe> getAll() throws SQLException {
         List<Recipe> list = new ArrayList<>();
-        String sql = "SELECT id, title, ingredients, instructions FROM recipes ORDER BY id DESC";
+    String sql = "SELECT id, title, ingredients, instructions, image FROM recipes ORDER BY id DESC";
         try (Statement st = conn.createStatement(); ResultSet rs = st.executeQuery(sql)) {
             while (rs.next()) {
-                list.add(new Recipe(rs.getInt("id"), rs.getString("title"), rs.getString("ingredients"), rs.getString("instructions")));
+                list.add(new Recipe(rs.getInt("id"), rs.getString("title"), rs.getString("ingredients"), rs.getString("instructions"), rs.getString("image")));
             }
         }
         return list;
