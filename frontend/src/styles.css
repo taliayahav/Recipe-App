@@ -4,8 +4,53 @@ body { font-family: Arial, Helvetica, sans-serif; margin: 0; padding: 1rem; back
 .list { flex: 2 }
 .form { flex: 1; background: white; padding: 1rem; border-radius: 6px }
 .card { background: white; padding: 1rem; margin-bottom: 1rem; border-radius: 6px }
-input, textarea { width: 100%; margin-bottom: 0.5rem; padding: 0.5rem }
-button { padding: 0.6rem 1rem }
+body { font-family: Arial, Helvetica, sans-serif; margin: 0; padding: 1rem; background: #f8f8f8 }
+.container { max-width: 1000px; margin: 0 auto }
+.nav { display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem }
+.nav button { padding: 0.4rem 0.6rem }
+.nav button.active { background:#333; color:white }
+.toast { position:fixed; right:20px; top:20px; background:#333; color:white; padding:0.6rem 1rem; border-radius:6px }
+
+/* Search */
+.search-input { flex: 1; max-width: 380px; margin: 0 12px; padding: 8px 10px; border-radius: 8px; border: 1px solid #e6e6e9 }
+
+/* Empty state */
+.empty-state { grid-column: 1 / -1; text-align: center; padding: 40px; background: rgba(255,255,255,0.6); border-radius: 10px }
+.empty-state p { margin: 0 0 12px 0; color: #444 }
+.empty-state button { background: #17a2b8; padding: 8px 12px; border-radius: 8px; border: none; color: white }
+
+/* Accessibility: visible focus */
+button:focus, .search-input:focus, input:focus, textarea:focus { outline: 3px solid rgba(43,110,246,0.18); outline-offset: 2px }
+
+/* Card keyboard interaction */
+.card:focus { box-shadow: 0 6px 20px rgba(43,110,246,0.18); transform: translateY(-2px) }
+.card { transition: transform 120ms ease, box-shadow 120ms ease }
+
+/* Grid layout */
+.grid { display:grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap:16px }
+
+.card { background: linear-gradient(180deg,#fff,#fbfbfd); border-radius:12px; box-shadow:0 4px 14px rgba(25,25,25,0.06); overflow:hidden; position:relative; cursor:pointer }
+.card-image { height:110px; background:linear-gradient(90deg,#f6f8ff,#fff); }
+.card-body { padding:12px }
+.card-title { margin:0 0 6px 0; font-size:1.05rem }
+.card-ingredients { margin:0;color:#666;font-size:0.9rem }
+.card-actions { position:absolute; right:12px; top:12px; display:flex; gap:6px }
+.card-actions button { background:transparent;border:1px solid rgba(0,0,0,0.08); padding:6px 8px; border-radius:6px }
+.card-actions button.danger { border-color:#ffb3b3 }
+
+main { padding: 8px 0 }
+
+.form-wrap { display:flex; justify-content:center }
+.form { width:600px; background:white; padding:18px; border-radius:10px; box-shadow:0 6px 20px rgba(20,20,20,0.06) }
+.form label { display:block; margin-top:8px; font-weight:600 }
+input, textarea { width:100%; padding:8px; border-radius:6px; border:1px solid #e6e6e9; margin-top:6px }
+button { padding:8px 12px; border-radius:8px; background:#2b6ef6; color:white; border:none }
+button:hover { opacity:0.95 }
+
+/* Modal */
+.modal { position:fixed; inset:0; display:flex; align-items:center; justify-content:center; background:rgba(0,0,0,0.4) }
+.modal-content { background:white; padding:20px; border-radius:10px; max-width:700px; width:90%; max-height:80vh; overflow:auto }
+.modal-close { position:absolute; right:16px; top:12px; background:transparent; border:none; font-size:22px }
 
 .nav { display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem }
 .nav button { padding: 0.4rem 0.6rem }
