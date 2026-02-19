@@ -60,4 +60,44 @@ public class RecipeRepository {
         }
         return list;
     }
+
+    // Add image row for a recipe (filename should be the stored path, e.g. /uploads/1234.jpg)
+    public static void addImageToRecipe(int recipeId, String filename, String provider, String attribution, boolean isPrimary) throws SQLException {
+        String sql = "INSERT INTO recipe_images(recipe_id, filename, provider, attribution, is_primary) VALUES(?,?,?,?,?)";
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, recipeId);
+            ps.setString(2, filename);
+            ps.setString(3, provider);
+            ps.setString(4, attribution);
+            ps.setInt(5, isPrimary ? 1 : 0);
+            ps.executeUpdate();
+            System.out.println("RecipeRepository: inserted image for recipe " + recipeId + " -> " + filename + " (provider=" + provider + ")");
+        }
+        if (isPrimary) {
+            updateImageColumn(recipeId, filename);
+        }
+    }
+
+    // Update the recipes.image column for the primary image
+    public static void updateImageColumn(int recipeId, String filename) throws SQLException {
+        String sql = "UPDATE recipes SET image = ? WHERE id = ?";
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, filename);
+            ps.setInt(2, recipeId);
+            ps.executeUpdate();
+            System.out.println("RecipeRepository: updated recipes.image for " + recipeId + " -> " + filename);
+        }
+    }
+
+    public static List<String> getImagesForRecipe(int recipeId) throws SQLException {
+        List<String> images = new ArrayList<>();
+        String sql = "SELECT filename FROM recipe_images WHERE recipe_id = ? ORDER BY id ASC";
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, recipeId);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) images.add(rs.getString("filename"));
+            }
+        }
+        return images;
+    }
 }

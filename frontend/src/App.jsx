@@ -6,14 +6,13 @@ const API = import.meta.env.VITE_BACKEND_URL || 'http://localhost:7001'
 function RecipeCard({ recipe, onEdit, onDelete, onOpen }) {
   return (
     <article className="card" onClick={() => onOpen(recipe)}>
-  <div className="card-image">{recipe.image && <img src={`${API}${recipe.image}`} alt={recipe.title} />}</div>
+      <div className="card-image">{recipe.image && <img src={`${API}${recipe.image}`} alt={recipe.title} />}</div>
       <div className="card-body">
         <h3 className="card-title">{recipe.title}</h3>
-        <p className="card-ingredients">{recipe.ingredients?.split('\n')[0]}</p>
-      </div>
-      <div className="card-actions">
-        <button onClick={(e) => { e.stopPropagation(); onEdit(recipe) }}>Edit</button>
-        <button onClick={(e) => { e.stopPropagation(); onDelete(recipe.id) }} className="danger">Delete</button>
+        <div className="card-actions" onClick={e => e.stopPropagation()}>
+          <button className="edit" onClick={() => onEdit(recipe)}>Edit</button>
+          <button onClick={() => onDelete(recipe.id)} className="danger">Delete</button>
+        </div>
       </div>
     </article>
   )
@@ -46,6 +45,21 @@ export default function App() {
 
   useEffect(() => { fetchRecipes() }, [])
 
+  // Server-Sent Events: listen for recipe updates so UI refreshes automatically
+  useEffect(() => {
+    let es
+    try {
+      es = new EventSource(`${API}/events`)
+      es.addEventListener('recipe-update', (ev) => {
+        try {
+          const data = JSON.parse(ev.data)
+          setRecipes(prev => prev.map(r => r.id === data.id ? { ...r, image: data.image } : r))
+        } catch (e) { }
+      })
+    } catch (e) { }
+    return () => { if (es) es.close() }
+  }, [])
+
   async function fetchRecipes() {
     try {
       const res = await axios.get(`${API}/recipes`)
@@ -66,14 +80,44 @@ export default function App() {
       if (editingId) {
         await axios.put(`${API}/recipes/${editingId}`, fd, { headers: { 'Content-Type': 'multipart/form-data' } })
         setToast({ message: 'Recipe updated', visible: true })
+        setForm({ title: '', ingredients: '', instructions: '' })
+        setEditingId(null)
+        setView('list')
+        fetchRecipes()
       } else {
-        await axios.post(`${API}/recipes`, fd, { headers: { 'Content-Type': 'multipart/form-data' } })
+        const res = await axios.post(`${API}/recipes`, fd, { headers: { 'Content-Type': 'multipart/form-data' } })
+        const created = res.data
         setToast({ message: 'Recipe saved', visible: true })
+        setForm({ title: '', ingredients: '', instructions: '' })
+        setEditingId(null)
+        setView('list')
+  // optimistic insert: show created item immediately and let SSE/poller update image
+  setRecipes(prev => [created, ...prev])
+        // if no image yet, poll the single recipe until background worker adds one
+        if (!created.image) {
+          let attempts = 0
+          const maxAttempts = 12 // 12 * 5s = 1 minute
+          const interval = 5000
+          const id = created.id
+          const poll = setInterval(async () => {
+            attempts++
+            try {
+              const r = await axios.get(`${API}/recipes`)
+              const found = r.data.find(x => x.id === id)
+              if (found && found.image) {
+                setRecipes(prev => prev.map(p => p.id === id ? found : p))
+                clearInterval(poll)
+              } else if (attempts >= maxAttempts) {
+                clearInterval(poll)
+              }
+            } catch (err) {
+              if (attempts >= maxAttempts) clearInterval(poll)
+            }
+          }, interval)
+        } else {
+          fetchRecipes()
+        }
       }
-      setForm({ title: '', ingredients: '', instructions: '' })
-      setEditingId(null)
-      setView('list')
-      fetchRecipes()
     } catch (err) {
       setToast({ message: 'Save failed', visible: true })
     }
